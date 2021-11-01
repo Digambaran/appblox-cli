@@ -1,5 +1,9 @@
 # appblox-cli
 
+Appblox What?
+
+// need to add a small description of the appblox with link to the website and docs
+
 A CLI tool to build and deploy, blox and apps inside AppBlox Ecosytem.
 
 The tool can be used for following purposes,
