@@ -1,0 +1,19 @@
+{
+  "env": {
+    "es6": true,
+    "node": true
+  },
+  "parserOptions": {
+    "ecmaVersion": "latest"
+  },
+  "rules": {
+    "no-var": "error",
+    "prefer-const": "error",
+    "prefer-destructuring": "error",
+    "prefer-spread": "error",
+    "no-undef-init": "warn",
+    "rest-spread-spacing": "warn",
+    "quotes": "error"
+  },
+  "extends": ["eslint:recommended", "prettier"]
+}
