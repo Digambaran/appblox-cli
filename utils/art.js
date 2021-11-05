@@ -1,10 +1,11 @@
-const figlet = require("figlet")
+const figlet = require('figlet')
+
 module.exports = function Art(n) {
-  figlet(n, { font: "Colossal" }, function (err, data) {
+  figlet(n, { font: 'Colossal' }, (err, data) => {
     if (err) {
-      console.log("Something went wrong...")
+      console.log('Something went wrong...')
       console.dir(err)
-      //fallback print
+      // fallback print
       console.log(n)
       return
     }

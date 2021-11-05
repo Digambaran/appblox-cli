@@ -9,31 +9,31 @@
  * if user gives NO, reconfirm and inform and ABORT
  */
 
-"use strict"
+
 // eslint-disable-next-line no-unused-vars
-const { ChildProcess } = require("child_process")
-const inquirer = require("inquirer")
+const { ChildProcess } = require('child_process')
+const inquirer = require('inquirer')
 // eslint-disable-next-line no-unused-vars
-const { Observable, Subscriber } = require("rxjs")
-const getSignedInUser = require("./getSignedInUser")
-const axios = require("axios")
-const fs = require("fs")
+const { Observable, Subscriber } = require('rxjs')
+const axios = require('axios')
+const fs = require('fs')
+const getSignedInUser = require('./getSignedInUser')
 // const path = require("path")
 // const pathToENV = path.resolve("./.env")
-const parseResponse = require("../utils/parseResponse")
+const parseResponse = require('./parseResponse')
 /**
  * @type {Subscriber}
  */
 let Emitter
 
-//TODO -- killing thread, is it a good choice? could use .kill ??
+// TODO -- killing thread, is it a good choice? could use .kill ??
 
 const stream = new Observable((obs) => {
   Emitter = obs
   obs.next({
-    type: "confirm",
-    name: "authConfirm",
-    message: "Access granted?",
+    type: 'confirm',
+    name: 'authConfirm',
+    message: 'Access granted?',
   })
 })
 
@@ -64,12 +64,12 @@ const stream = new Observable((obs) => {
 function handleTokenError(msg, thread, count) {
   // console.log('count', count);
   switch (msg) {
-    case "access_denied":
+    case 'access_denied':
       // complete stream, exit and restart process
-      thread.send("KILLTIMER") //just to be safe since detached is not given it should get killed with parent..
-      Abort("Such a wicked game..Access denied!!")
+      thread.send('KILLTIMER') // just to be safe since detached is not given it should get killed with parent..
+      Abort('Such a wicked game..Access denied!!')
       break
-    case "authorization_pending":
+    case 'authorization_pending':
       // Ask user to give access, maybe show the code again or copy it
       // to clipboard, give hints
       ;(count == 1 || count == 2) &&
@@ -77,30 +77,30 @@ function handleTokenError(msg, thread, count) {
           "Seems like authorization is still pending..\nPlease go to https://github.com/login/device, and paste the above code.'"
         )
 
-      count == 3 && console.log("Nope! still not authorized")
-      count == 4 && console.log("Last chance!! You can do it..")
+      count == 3 && console.log('Nope! still not authorized')
+      count == 4 && console.log('Last chance!! You can do it..')
       if (count === 5) {
-        console.log("Whew..whatever.")
-        thread.send("KILLTIMER") //just to be safe
-        Abort("Not authorized.")
+        console.log('Whew..whatever.')
+        thread.send('KILLTIMER') // just to be safe
+        Abort('Not authorized.')
       }
       // goto authConfirm step
       Emitter.next({
-        type: "confirm",
-        message: "Acces granted?",
-        name: "authConfirm",
+        type: 'confirm',
+        message: 'Acces granted?',
+        name: 'authConfirm',
         askAnswered: true,
       })
       break
-    case "expired_token":
+    case 'expired_token':
       // Most probably wont happen, as timer would have killed the process already
       // if happens, abort and restart process
-      !thread.killed && thread.send("KILLTIMER") //just to be safe
-      Abort("Token expired")
+      !thread.killed && thread.send('KILLTIMER') // just to be safe
+      Abort('Token expired')
       break
     default:
-      console.log("Something went terribly wrong..I am Aborting!!")
-      thread.send("KILLTIMER") //just to be safe
+      console.log('Something went terribly wrong..I am Aborting!!')
+      thread.send('KILLTIMER') // just to be safe
       process.exit(1)
   }
 }
@@ -132,10 +132,10 @@ async function OTPVerify(data, url, thread, pathToENV) {
         const { name, answer } = ans
         // console.log(ans);
         switch (name) {
-          case "authConfirm":
+          case 'authConfirm':
             authYesRetryCount++
             if (answer) {
-              //TODO - give a loading screen
+              // TODO - give a loading screen
               try {
                 const getTokenResponse = await axios.post(url, data)
                 // console.log('gettokenresponse', getTokenResponse);
@@ -147,23 +147,23 @@ async function OTPVerify(data, url, thread, pathToENV) {
                 // go to catch.. if any other error, status is 200 but response
                 // with have TokenDataError type, if so throw and catch.
                 // if success response will have TokenDataSuccess type, continue..
-                if (TokenData["error"]) {
+                if (TokenData.error) {
                   // if user has not authorized yet - authorization_pending
                   // if pressed cancel on auth screen - access_denied
                   // if device code has expired - expired_token
-                  throw new Error(TokenData["error"])
+                  throw new Error(TokenData.error)
                 }
                 const { user } = await getSignedInUser(
-                  TokenData["access_token"]
+                  TokenData.access_token
                 )
                 if (user) {
                   // Remove the loading screen
-                  process.env["TOKEN"] = TokenData["access_token"]
-                  process.env["USER"] = user.userName
-                  process.env["USERID"] = user.userId
+                  process.env.TOKEN = TokenData.access_token
+                  process.env.USER = user.userName
+                  process.env.USERID = user.userId
                   Emitter.next({
-                    type: "confirm",
-                    name: "confirmUser",
+                    type: 'confirm',
+                    name: 'confirmUser',
                     message: `Continue as ${user.userName}?`,
                   })
                 } else {
@@ -171,7 +171,7 @@ async function OTPVerify(data, url, thread, pathToENV) {
                   // error here or redo call for token and try with that
                   // console.log(error);
                   // Remove the loading screen
-                  Abort("No user found")
+                  Abort('No user found')
                 }
               } catch (e) {
                 // Since getSignedInUser catches error internally,
@@ -184,66 +184,66 @@ async function OTPVerify(data, url, thread, pathToENV) {
             } else {
               // Remove the loading screen
               Emitter.next({
-                type: "confirm",
-                name: "abortConfirmation",
-                message: "Are you sure you want to abort?",
+                type: 'confirm',
+                name: 'abortConfirmation',
+                message: 'Are you sure you want to abort?',
                 askAnswered: true,
               })
             }
             break
-          case "abortConfirmation":
+          case 'abortConfirmation':
             abortYesNoCount++
             if (answer) {
-              !thread.killed && thread.send("KILLTIMER")
+              !thread.killed && thread.send('KILLTIMER')
               Emitter.complete()
-              Abort("User aborted!")
+              Abort('User aborted!')
             } else {
-              //display code again, copy to clipboard and ask to confirm again
+              // display code again, copy to clipboard and ask to confirm again
               if (abortYesNoCount === 5) {
-                console.log("I have better things to do with my life!!")
-                console.log("Aborting")
-                !thread.killed && thread.send("KILLTIMER")
-                Abort("Make up your mind!!")
+                console.log('I have better things to do with my life!!')
+                console.log('Aborting')
+                !thread.killed && thread.send('KILLTIMER')
+                Abort('Make up your mind!!')
               }
-              //TODO -- add more comments
+              // TODO -- add more comments
               Emitter.next({
-                type: "confirm",
-                message: "Acces granted?",
-                name: "authConfirm",
+                type: 'confirm',
+                message: 'Acces granted?',
+                name: 'authConfirm',
                 askAnswered: true,
               })
             }
             break
-          case "confirmUser":
+          case 'confirmUser':
             if (answer) {
-              thread.send("KILLTIMER")
-              //TODO--causes error- not access to TokenData
+              thread.send('KILLTIMER')
+              // TODO--causes error- not access to TokenData
               fs.writeFileSync(
                 pathToENV,
-                "TOKEN=" +
-                  process.env.TOKEN +
-                  "\nREFRESH=0\nUSER=" +
-                  process.env.USER +
-                  "\nUSERID=" +
-                  process.env.USERID
+                `TOKEN=${ 
+                  process.env.TOKEN 
+                  }\nREFRESH=0\nUSER=${ 
+                  process.env.USER 
+                  }\nUSERID=${ 
+                  process.env.USERID}`
               )
               Emitter.complete()
             } else {
-              Abort("Diff user")
+              Abort('Diff user')
             }
             break
-          case "authPending":
+          case 'authPending':
             break
           default:
             break
         }
       },
       error: (err) => {
-        console.log("Error: ", err)
+        console.log('Error: ', err)
         res(false)
       },
       complete: () => {
-        console.log("Auth Completed")
+        console.log('Auth Completed')
         res(true)
       },
     })
@@ -255,7 +255,7 @@ async function OTPVerify(data, url, thread, pathToENV) {
  * @param {string} msg Message to show.
  */
 function Abort(msg) {
-  console.log("Aborting " + msg)
+  console.log(`Aborting ${  msg}`)
   process.exit(0)
 }
 module.exports = OTPVerify

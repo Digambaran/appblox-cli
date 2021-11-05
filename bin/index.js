@@ -1,44 +1,44 @@
 #!/usr/bin/env node
-const clientID = "b68059492d3bcd0535eb"
-const url = "https://github.com/login/device"
-const getTokenURL = "https://github.com/login/oauth/access_token"
-const { exec, execSync } = require("child_process")
-const { fork } = require("child_process")
-const chalk = require("chalk")
-const path = require("path")
-const axios = require("axios")
-const inquirer = require("inquirer")
-const fs = require("fs")
-const { Command } = require("commander")
+const clientID = 'b68059492d3bcd0535eb'
+const url = 'https://github.com/login/device'
+const getTokenURL = 'https://github.com/login/oauth/access_token'
+const { exec, execSync } = require('child_process')
+const { fork } = require('child_process')
+const chalk = require('chalk')
+const path = require('path')
+const axios = require('axios')
+const inquirer = require('inquirer')
+const fs = require('fs')
+const { Command } = require('commander')
 // eslint-disable-next-line no-unused-vars
-const { Observable, Subscriber, noop } = require("rxjs")
-//UTILS
-const Art = require("../utils/art.js")
-const pbcopy = require("../utils/clipcopy.js")
-const getSignedInUser = require("../utils/getSignedInUser")
-const OTPConfirmation = require("../utils/OTPConfirmation")
-const { newls } = require("../utils/listandselectrepos")
-const { userRepos, userOrgs, orgTeams } = require("../utils/Queries")
-const parseResponse = require("../utils/parseResponse")
+const { Observable, Subscriber, noop } = require('rxjs')
+// UTILS
+const Art = require('../utils/art.js')
+const pbcopy = require('../utils/clipcopy.js')
+const getSignedInUser = require('../utils/getSignedInUser')
+const OTPConfirmation = require('../utils/OTPConfirmation')
+const { newls } = require('../utils/listandselectrepos')
+const { userRepos, userOrgs, orgTeams } = require('../utils/Queries')
+const parseResponse = require('../utils/parseResponse')
 
-const packageJson = require("../package.json")
+const packageJson = require('../package.json')
 const {
   cloneTemplateRepository,
   createRepository,
-} = require("../utils/Mutations.js")
+} = require('../utils/Mutations.js')
 
-let pathToENV = path.resolve("./.env")
+let pathToENV = path.resolve('./.env')
 
 const handleAuth = async (data) => {
   const OTPresponse = parseResponse(data)
-  const userCode = OTPresponse["user_code"]
-  const expiresIn = OTPresponse["expires_in"]
-  console.log("\n")
+  const userCode = OTPresponse.user_code
+  const expiresIn = OTPresponse.expires_in
+  console.log('\n')
   console.log(
-    "Please go to https://github.com/login/device, and paste the below code."
+    'Please go to https://github.com/login/device, and paste the below code.'
   )
   Art(userCode)
-  console.log("\n\n\n")
+  console.log('\n\n\n')
   pbcopy(userCode)
   const timerThread = TimerThread(expiresIn)
   // const timerThread={killed:true} -- for token expired testing.
@@ -46,20 +46,20 @@ const handleAuth = async (data) => {
   await openBrowser()
   const Cdata = {
     client_id: clientID,
-    device_code: OTPresponse["device_code"],
-    grant_type: "urn:ietf:params:oauth:grant-type:device_code",
+    device_code: OTPresponse.device_code,
+    grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
   }
   const done = await OTPConfirmation(Cdata, getTokenURL, timerThread, pathToENV)
   if (done) return
-  else {
-    console.log("something went wrong")
+  
+    console.log('something went wrong')
     process.exit(0)
-  }
+  
 }
 
 function openBrowser() {
   return new Promise((res, rej) =>
-    exec("start " + url, (error, stdout, stderr) => {
+    exec(`start ${  url}`, (error, stdout, stderr) => {
       if (error) {
         // console.log(`error: ${error.message}`);
         rej(error)
@@ -69,22 +69,22 @@ function openBrowser() {
         rej(stderr)
       }
       // console.log(`stdout: ${stdout}`);
-      res("good")
+      res('good')
     })
   )
 }
 
 async function checkAndSetAuth() {
-  const r = require("dotenv").config({ path: pathToENV })
+  const r = require('dotenv').config({ path: pathToENV })
   // console.log(process.env.TOKEN);
   if (r.error) {
     // console.log('error reading env file', r.error);
     // If in error because of any other reason,
     // remove file and do new auth.
-    r.error.code !== "ENOENT" && fs.unlinkSync(pathToENV)
-    console.log(chalk.red("Not signed in!"))
+    r.error.code !== 'ENOENT' && fs.unlinkSync(pathToENV)
+    console.log(chalk.red('Not signed in!'))
     return { redoAuth: true }
-  } else {
+  } 
     // make call to check if the user has revoked access,
     // if not log the signed in name.
     // else redo auth
@@ -92,13 +92,13 @@ async function checkAndSetAuth() {
     if (user && correctCredsInEnv(user.userName, user.userId)) {
       console.log(`Signed in as ${chalk.whiteBright(user.userName)}`)
       return { redoAuth: false }
-    } else {
+    } 
       // console.log(error);
-      console.log("Not signed in, redirecting to signin!")
+      console.log('Not signed in, redirecting to signin!')
       return { redoAuth: true }
       // process.exit(0)
-    }
-  }
+    
+  
 }
 /**
  * Checks if Name and Id returned for given token is same as present in env
@@ -123,10 +123,10 @@ function ensureDirSync(dir) {
     noop()
   }
   if (stats && stats.isDirectory()) return
-  else {
+  
     fs.mkdirSync(dir)
-    return
-  }
+    
+  
 }
 
 function createFileSync(file) {
@@ -147,21 +147,21 @@ function createFileSync(file) {
     }
   } catch (err) {
     // If the stat call above failed because the directory doesn't exist, create it
-    if (err && err.code === "ENOENT") fs.mkdirSync(dir)
+    if (err && err.code === 'ENOENT') fs.mkdirSync(dir)
     else throw err
   }
 
-  fs.writeFileSync(file, "")
+  fs.writeFileSync(file, '')
 }
 
 function createprojectstructure(name) {
   const root = path.resolve(name)
   // const appName = path.basename(root)
-  //TODO--Check if parent name is okay here
+  // TODO--Check if parent name is okay here
   ensureDirSync(root)
   process.chdir(root)
-  fs.mkdirSync(path.resolve("HouseClient"))
-  fs.appendFileSync(pathToENV, "\nCLIENTHOUSE=" + path.resolve("HouseClient"))
+  fs.mkdirSync(path.resolve('HouseClient'))
+  fs.appendFileSync(pathToENV, `\nCLIENTHOUSE=${  path.resolve('HouseClient')}`)
   // TODO--
   // create house client and container here, prompt for creating from template
   // map to env
@@ -169,44 +169,44 @@ function createprojectstructure(name) {
 
 const start = async (key, dir) => {
   try {
-    //setting env path for before checkAndSetAuth and handleAuth
-    pathToENV = path.resolve(dir, ".env")
+    // setting env path for before checkAndSetAuth and handleAuth
+    pathToENV = path.resolve(dir, '.env')
     // if a new project then env parent directory might be missing, to avoid error in OTPConfirmation
-    key === "newproject" && createFileSync(pathToENV)
+    key === 'newproject' && createFileSync(pathToENV)
 
     const { redoAuth } = await checkAndSetAuth()
     if (redoAuth) {
       const response = await axios.post(
-        "https://github.com/login/device/code",
-        { client_id: clientID, scope: "repo,read:org" }
+        'https://github.com/login/device/code',
+        { client_id: clientID, scope: 'repo,read:org' }
       )
       await handleAuth(decodeURIComponent(response.data))
     }
     switch (key) {
-      case "newproject":
+      case 'newproject':
         console.log(dir)
         // since env is created by OTPConfirmation in process.cwd(),
         // pathToENV = path.resolve(dir, ".env")
         // createFileSync(pathToENV)
         createprojectstructure(dir)
         break
-      case "updateproject":
+      case 'updateproject':
         console.log(dir)
         createprojectstructure(dir)
         // updateProjectDetails()
         break
-      case "newcomponent":
-        console.log("creaete new repo")
-        console.log("move to -", process.env.HF)
-        console.log("init as submodules")
-        console.log("done")
+      case 'newcomponent':
+        console.log('creaete new repo')
+        console.log('move to -', process.env.HF)
+        console.log('init as submodules')
+        console.log('done')
         createRepo()
         break
       default:
         break
     }
   } catch (e) {
-    console.log("Something went wrong", e)
+    console.log('Something went wrong', e)
     process.exit(0)
   }
 
@@ -216,12 +216,12 @@ const start = async (key, dir) => {
 // start();
 
 function TimerThread(seconds) {
-  const cpf = fork(path.join(__dirname, "timer.js"), [seconds])
+  const cpf = fork(path.join(__dirname, 'timer.js'), [seconds])
   // console.log('pid-',cpf.pid);
   // console.log('Thread started for ', seconds);
-  cpf.on("message", (m) => {
+  cpf.on('message', (m) => {
     // console.log(m);
-    if (m === "STOP") {
+    if (m === 'STOP') {
       process.exit(0)
     }
   })
@@ -232,20 +232,20 @@ function TimerThread(seconds) {
 
 function init() {
   const program = new Command()
-  const addC = program.command("add")
-  //TODO -- get version properly
+  const addC = program.command('add')
+  // TODO -- get version properly
   program.version(packageJson.version)
 
   program
-    .command("init")
-    .arguments("<project-directory>")
-    .description("start everything")
+    .command('init')
+    .arguments('<project-directory>')
+    .description('start everything')
     .action(async (name) => {
-      console.log("init called with", name)
+      console.log('init called with', name)
       const createnewproject = await fieldTest(name)
       if (createnewproject) {
         // If current dir is clean or has only folders and new project is in new folder, ie not "init ."
-        start("newproject", name)
+        start('newproject', name)
       } else {
         // cant run update existing project details logic here,
         // because false might also mean, there are just a lot of files and dirs..
@@ -253,11 +253,11 @@ function init() {
     })
 
   addC
-    .command("component")
-    .description("to add")
+    .command('component')
+    .description('to add')
     .action((values) => {
       console.log(values)
-      start("newcomponent")
+      start('newcomponent')
     })
   program.parse(process.argv)
 }
@@ -272,18 +272,18 @@ function isDirClean() {
   const dir = process.cwd()
   try {
     const files = fs.readdirSync(dir)
-    if (files.includes(".env")) {
+    if (files.includes('.env')) {
       return dir
-    } else {
+    } 
       return files.reduce(
         (acc, file) => {
           if (fs.statSync(path.resolve(file)).isDirectory())
             return { ...acc, dirs: acc.dirs + 1 }
-          else return { ...acc, files: acc.files + 1 }
+          return { ...acc, files: acc.files + 1 }
         },
         { dirs: 0, files: 0 }
       )
-    }
+    
   } catch (e) {
     console.log(e)
     process.exit(1)
@@ -303,22 +303,22 @@ function isDirClean() {
 
 function WipeAllConfirmation() {
   return inquirer.prompt({
-    type: "confirm",
-    message: "There are files,Do you want to wipe all",
-    name: "wipeAll",
+    type: 'confirm',
+    message: 'There are files,Do you want to wipe all',
+    name: 'wipeAll',
   })
 }
 
 function wipeAllFilesIn(dir) {
-  console.log("wiping in ", dir)
+  console.log('wiping in ', dir)
   const files = fs.readdirSync(dir)
   try {
     for (let i = 0; i < files.length; i++) {
-      console.log("Removing ", path.join(dir, files[i]))
+      console.log('Removing ', path.join(dir, files[i]))
       fs.rmSync(path.join(dir, files[i]), { recursive: true, force: true })
     }
   } catch (e) {
-    console.log("error deleting files")
+    console.log('error deleting files')
   }
 }
 async function fieldTest(dirName) {
@@ -338,9 +338,9 @@ async function fieldTest(dirName) {
    * Then, ask whether to delete all files and create new project,
    * or continue
    */
-  if (typeof penv === "string") {
-    //TODO -- find and set pathToENV here
-    const trr = require("dotenv").config({ path: path.join(penv, ".env") })
+  if (typeof penv === 'string') {
+    // TODO -- find and set pathToENV here
+    const trr = require('dotenv').config({ path: path.join(penv, '.env') })
     if (!trr.error) {
       const prname = process.env.PROJECT
       console.log(`Found project ${chalk.gray(prname)}`)
@@ -349,10 +349,10 @@ async function fieldTest(dirName) {
     // if the dir only contains directories and no files,
     // and user is trying to create project not in current dir then createnewproject.
     if (penv.files === 0 && penv.dirs) {
-      if (dirName !== ".") return true
+      if (dirName !== '.') return true
     }
     if (!penv.files && !penv.dirs) {
-      console.log("target is clean,creating project..")
+      console.log('target is clean,creating project..')
       return true
     }
   }
@@ -365,29 +365,29 @@ async function fieldTest(dirName) {
   if (wipeAll) {
     wipeAllFilesIn(process.cwd())
     return true
-  } else {
-    //TODO-- Display current project details here if existing project is found
+  } 
+    // TODO-- Display current project details here if existing project is found
     // Might not always contain projects, so handle the Update project logic here itself.
     // console.log("Current project details-")
     // console.log("User - ", process.env.USER)
     // console.log("Project - ", process.env.PROJECT)
     // console.log("Paths and such here")
     return false
-  }
+  
 }
 
 function getTemplateV2() {
   const questions = [
     {
-      type: "confirm",
-      name: "createFromTemplate",
-      message: "Create repo from a template",
+      type: 'confirm',
+      name: 'createFromTemplate',
+      message: 'Create repo from a template',
     },
     {
-      type: "customList",
-      name: "selectTemplate",
-      message: "select a template repo",
-      choices: [], //give empty list, custom list loads from api
+      type: 'customList',
+      name: 'selectTemplate',
+      message: 'select a template repo',
+      choices: [], // give empty list, custom list loads from api
       source: new newls(userRepos.Q, userRepos.Tr_t).sourceAll,
       pageSize: 22,
       loop: false,
@@ -397,7 +397,7 @@ function getTemplateV2() {
   return inquirer
     .prompt(questions)
     .then((ans) => ans.selectTemplate || null)
-    .catch((err) => console.log(err, "lll"))
+    .catch((err) => console.log(err, 'lll'))
 }
 /**
  * Prompts user for template repo selection
@@ -407,10 +407,10 @@ function getTemplateV2() {
 function getOrgId() {
   const question = [
     {
-      type: "customList",
-      name: "selectOrg",
-      message: "select a organization",
-      choices: [], //give empty list, loads initial set
+      type: 'customList',
+      name: 'selectOrg',
+      message: 'select a organization',
+      choices: [], // give empty list, loads initial set
       source: new newls(userOrgs.Q, userOrgs.Tr).sourceB,
       pageSize: 22,
     },
@@ -424,7 +424,7 @@ function getOrgId() {
     // user git itself.
 
     // ans will have display name followed by Id seperated by "/"
-    return ans.selectOrg.split("/")
+    return ans.selectOrg.split('/')
   })
 }
 
@@ -441,38 +441,38 @@ async function createRepo(ownerId, ownerType, orgName) {
   const template = await getTemplateV2()
   const questions = [
     {
-      type: "input",
-      name: "reponame",
-      message: "Name for repo",
+      type: 'input',
+      name: 'reponame',
+      message: 'Name for repo',
     },
     {
-      //TODO - should give option to skip
-      type: "input",
-      name: "description",
-      message: "Description of repo",
+      // TODO - should give option to skip
+      type: 'input',
+      name: 'description',
+      message: 'Description of repo',
     },
     {
-      type: "list",
-      name: "visibility",
-      message: "visibility of repo",
-      choices: ["PRIVATE", "PUBLIC", "INTERNAL"],
+      type: 'list',
+      name: 'visibility',
+      message: 'visibility of repo',
+      choices: ['PRIVATE', 'PUBLIC', 'INTERNAL'],
     },
   ]
   if (!template) {
     questions.push({
-      type: "confirm",
-      message: "Mark as a template repo",
-      name: "markAsTemplate",
+      type: 'confirm',
+      message: 'Mark as a template repo',
+      name: 'markAsTemplate',
     })
   }
   // if creating in organization and not from a template,
   // then need to send team id that should be given access,
   // might need to change to multiple select if can pass multiple team ids
-  if (ownerType === "org" && !template) {
+  if (ownerType === 'org' && !template) {
     questions.push({
-      type: "list",
-      message: "select team to give access",
-      name: "selectTeam",
+      type: 'list',
+      message: 'select team to give access',
+      name: 'selectTeam',
       choices: () => new newls(orgTeams.Q, orgTeams.Tr).sourceAll(orgName),
     })
   }
@@ -481,12 +481,12 @@ async function createRepo(ownerId, ownerType, orgName) {
   console.log(ans)
   // process.exit(0)
 
-  const apiGraph = " https://api.github.com/graphql"
+  const apiGraph = ' https://api.github.com/graphql'
   const headersV4 = {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
     // 'Authorization': 'bearer ' + obj['access_token'],
-    Authorization: "bearer " + process.env.TOKEN,
-    Accept: "application/vnd.github.v4+json",
+    Authorization: `bearer ${  process.env.TOKEN}`,
+    Accept: 'application/vnd.github.v4+json',
   }
   try {
     const { data } = await axios.post(
@@ -506,18 +506,18 @@ async function createRepo(ownerId, ownerType, orgName) {
       { headers: headersV4 }
     )
     if (data.errors) {
-      //TODO -- write data.errors.message to combined log here
+      // TODO -- write data.errors.message to combined log here
       console.log(data.errors)
       throw new Error(
-        "Something went wrong with query,\n" + data.errors.message
+        `Something went wrong with query,\n${  data.errors.message}`
       )
     }
     const repoUrl = template
       ? cloneTemplateRepository.Tr(data)
       : createRepository.Tr(data)
-    execSync("git clone " + repoUrl, { stdio: "inherit" })
-    console.log(chalk.green("Successfully Cloned!"))
+    execSync(`git clone ${  repoUrl}`, { stdio: 'inherit' })
+    console.log(chalk.green('Successfully Cloned!'))
   } catch (err) {
-    console.log(chalk.red("<<" + err.message + ">>"))
+    console.log(chalk.red(`<<${  err.message  }>>`))
   }
 }

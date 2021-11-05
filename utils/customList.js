@@ -1,10 +1,10 @@
-const ListPrompt = require("inquirer/lib/prompts/list")
-const Choices = require("inquirer/lib/objects/choices")
-const observe = require("inquirer/lib/utils/events")
-const incrementListIndex = require("inquirer/lib/utils/incrementListIndex")
-const { takeWhile, flatMap, map } = require("rxjs")
-const cliCursor = require("cli-cursor")
-const runAsync = require("run-async")
+const ListPrompt = require('inquirer/lib/prompts/list')
+const Choices = require('inquirer/lib/objects/choices')
+const observe = require('inquirer/lib/utils/events')
+const incrementListIndex = require('inquirer/lib/utils/incrementListIndex')
+const { takeWhile, flatMap, map } = require('rxjs')
+const cliCursor = require('cli-cursor')
+const runAsync = require('run-async')
 /**
  * in choices option pass empty array so a first set of page is loaded automatically,
  * else error
@@ -23,7 +23,7 @@ class CustomList extends ListPrompt {
     this.done = cb
 
     const self = this
-    const notAnswered = () => this.status !== "answered"
+    const notAnswered = () => this.status !== 'answered'
     const events = observe(this.rl)
 
     events.normalizedUpKey
@@ -51,9 +51,9 @@ class CustomList extends ListPrompt {
     // Init the prompt
     cliCursor.hide()
     if (self.firstRender) {
-      Promise.resolve(self.opt.source(null, null, null)).then(function inner(
+      Promise.resolve(self.opt.source(null, null, null)).then((
         choices
-      ) {
+      ) => {
         self.opt.choices = new Choices(choices)
         self.render()
       })
@@ -64,12 +64,12 @@ class CustomList extends ListPrompt {
   }
 
   onUpKey() {
-    this.selected = incrementListIndex(this.selected, "up", this.opt)
+    this.selected = incrementListIndex(this.selected, 'up', this.opt)
     this.render()
   }
 
   onDownKey() {
-    this.selected = incrementListIndex(this.selected, "down", this.opt)
+    this.selected = incrementListIndex(this.selected, 'down', this.opt)
     this.render()
   }
 
@@ -79,27 +79,28 @@ class CustomList extends ListPrompt {
     }
     this.render()
   }
+
   onSubmit(value) {
     const self = this
     switch (value) {
-      case "LoadMore":
-        return Promise.resolve(this.opt.source(null, null, "after")).then(
-          function inner(choices) {
+      case 'LoadMore':
+        return Promise.resolve(this.opt.source(null, null, 'after')).then(
+          (choices) => {
             self.opt.choices = new Choices(choices)
             self.selected = 0
             self.render()
           }
         )
-      case "LoadPrev":
-        return Promise.resolve(this.opt.source(null, null, "before")).then(
-          function inner(choices) {
+      case 'LoadPrev':
+        return Promise.resolve(this.opt.source(null, null, 'before')).then(
+          (choices) => {
             self.opt.choices = new Choices(choices)
             self.selected = 0
             self.render()
           }
         )
       default:
-        self.status = "answered"
+        self.status = 'answered'
         // Rerender prompt
         self.render()
         self.screen.done()

@@ -1,5 +1,5 @@
 // eslint-disable-next-line no-unused-vars
-const { AxiosResponse } = require("axios")
+const { AxiosResponse } = require('axios')
 
 /**
  * @typedef QueryTransformReturn
@@ -18,7 +18,7 @@ const { AxiosResponse } = require("axios")
  */
 const userReposTr = ({ data: { data } }, sieve) => {
   const list = data.user.repositories.edges
-    .filter(sieve ? sieve : Boolean)
+    .filter(sieve || Boolean)
     .map((r) => ({ name: r.node.name, value: r.node.id }))
   return { list, ...data.user.repositories.pageInfo }
 }
@@ -92,7 +92,7 @@ const userOrgsTR = ({ data: { data } }) => {
     // to get team list of organization in later prompt,
     // TODO -- if possible change choice object of inquirer to accomodate this,
     // and return ans with name and not just answer
-    value: v.node.name + "/" + v.node.id,
+    value: `${v.node.name  }/${  v.node.id}`,
   }))
   return { list, ...data.user.organizations.pageInfo }
 }

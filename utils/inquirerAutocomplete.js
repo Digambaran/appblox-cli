@@ -2,21 +2,21 @@
  * `autocomplete` type prompt
  */
 
-const ansiEscapes = require("ansi-escapes")
-const chalk = require("chalk")
-const figures = require("figures")
-const Base = require("inquirer/lib/prompts/base")
-const Choices = require("inquirer/lib/objects/choices")
-const observe = require("inquirer/lib/utils/events")
-const utils = require("inquirer/lib/utils/readline")
-const Paginator = require("inquirer/lib/utils/paginator")
-const runAsync = require("run-async")
-const { takeWhile } = require("rxjs/operators")
+const ansiEscapes = require('ansi-escapes')
+const chalk = require('chalk')
+const figures = require('figures')
+const Base = require('inquirer/lib/prompts/base')
+const Choices = require('inquirer/lib/objects/choices')
+const observe = require('inquirer/lib/utils/events')
+const utils = require('inquirer/lib/utils/readline')
+const Paginator = require('inquirer/lib/utils/paginator')
+const runAsync = require('run-async')
+const { takeWhile } = require('rxjs/operators')
 // const fs = require("fs")
-const userLogger = require("./logger")
+const userLogger = require('./logger')
 // const { ReadLine } = require("readline")
 
-const isSelectable = (choice) => choice.type !== "separator" && !choice.disabled
+const isSelectable = (choice) => choice.type !== 'separator' && !choice.disabled
 
 class AutocompletePrompt extends Base {
   /**
@@ -28,7 +28,7 @@ class AutocompletePrompt extends Base {
   constructor(questions, rl, answers) {
     super(questions, rl, answers)
     if (!this.opt.source) {
-      this.throwParamError("source")
+      this.throwParamError('source')
     }
 
     this.currentChoices = new Choices([])
@@ -54,7 +54,7 @@ class AutocompletePrompt extends Base {
    * @param  {Function} cb      Callback when prompt is done
    * @return {this}
    */
-  _run(cb /*: Function */) /*: this*/ {
+  _run(cb /*: Function */) /*: this */ {
     this.done = cb
 
     if (this.rl.history instanceof Array) {
@@ -67,8 +67,8 @@ class AutocompletePrompt extends Base {
 
     events.line
       .pipe(takeWhile(dontHaveAnswer))
-      //To avoid getting undefined answer if
-      //user clicks enter while searching is on
+      // To avoid getting undefined answer if
+      // user clicks enter while searching is on
       .pipe(takeWhile(() => this.searching === false))
       .forEach(this.onSubmit.bind(this))
     events.keypress
@@ -88,22 +88,22 @@ class AutocompletePrompt extends Base {
   render(error /*: ?string */) {
     // Render question
     let content = this.getQuestion()
-    let bottomContent = ""
+    let bottomContent = ''
 
     if (this.firstRender) {
-      const suggestText = this.opt.suggestOnly ? ", tab to autocomplete" : ""
+      const suggestText = this.opt.suggestOnly ? ', tab to autocomplete' : ''
       content += chalk.dim(
-        "(Use arrow keys or type to search" + suggestText + ")"
+        `(Use arrow keys or type to search${  suggestText  })`
       )
     }
     // Render choices or answer depending on the state
-    if (this.status === "answered") {
+    if (this.status === 'answered') {
       content += chalk.cyan(this.shortAnswer || this.answerName || this.answer)
     } else if (this.searching) {
       content += this.rl.line
-      bottomContent += "  " + chalk.dim(this.opt.searchText || "Searching...")
+      bottomContent += `  ${  chalk.dim(this.opt.searchText || 'Searching...')}`
     } else if (this.yetToType) {
-      bottomContent += "  " + chalk.dim("start typing...")
+      bottomContent += `  ${  chalk.dim('start typing...')}`
     } else if (this.nbChoices) {
       const choicesStr = listRender(this.currentChoices, this.selected)
       content += this.rl.line
@@ -114,7 +114,7 @@ class AutocompletePrompt extends Base {
           return false
         }
         const { name } = choice
-        realIndexPosition += name ? name.split("\n").length : 0
+        realIndexPosition += name ? name.split('\n').length : 0
         return true
       })
       bottomContent += this.paginator.paginate(
@@ -125,36 +125,37 @@ class AutocompletePrompt extends Base {
     } else {
       content += this.rl.line
       bottomContent +=
-        "  " + chalk.yellow(this.opt.emptyText || "No results...")
+        `  ${  chalk.yellow(this.opt.emptyText || 'No results...')}`
     }
 
     if (error) {
-      bottomContent += "\n" + chalk.red(">> ") + error
+      bottomContent += `\n${  chalk.red('>> ')  }${error}`
     }
 
     this.firstRender = false
 
     this.screen.render(content, bottomContent)
   }
+
   /**
    * When the user press enter
    * @param {String} line String or readline instance
    */
   onSubmit(line) {
-    userLogger.info("submitted")
+    userLogger.info('submitted')
     let lineOrRl = line || this.rl.line
     userLogger.info(lineOrRl)
     // only set default when suggestOnly (behaving as input prompt)
     // list prompt does only set default if matching actual item in list
     if (this.opt.suggestOnly && !lineOrRl) {
-      lineOrRl = this.opt.default === null ? "" : this.opt.default
+      lineOrRl = this.opt.default === null ? '' : this.opt.default
     }
 
-    if (typeof this.opt.validate === "function") {
+    if (typeof this.opt.validate === 'function') {
       const checkValidationResult = (validationResult) => {
         if (validationResult !== true) {
           this.render(
-            validationResult || "Enter something, tab to autocomplete!"
+            validationResult || 'Enter something, tab to autocomplete!'
           )
         } else {
           this.onSubmitAfterValidation(lineOrRl)
@@ -192,14 +193,14 @@ class AutocompletePrompt extends Base {
       this.answer = line || this.rl.line
       this.answerName = line || this.rl.line
       this.shortAnswer = line || this.rl.line
-      this.rl.line = ""
+      this.rl.line = ''
     } else if (this.nbChoices) {
       choice = this.currentChoices.getChoice(this.selected)
-      if (choice.value === "LoadMore") {
-        this.search("", "after")
+      if (choice.value === 'LoadMore') {
+        this.search('', 'after')
         return
-      } else if (choice.value === "LoadPrev") {
-        this.search("", "before")
+      } if (choice.value === 'LoadPrev') {
+        this.search('', 'before')
         return
       }
       this.answer = choice.value
@@ -219,7 +220,7 @@ class AutocompletePrompt extends Base {
         this.shortAnswer = value
       }
 
-      this.status = "answered"
+      this.status = 'answered'
       // Rerender prompt
       this.render()
       this.screen.done()
@@ -228,7 +229,7 @@ class AutocompletePrompt extends Base {
   }
 
   search(/* : ?string */) {
-    const searchTerm = arguments[0] || "A"
+    const searchTerm = arguments[0] || 'A'
     const self = this
     self.selected = 0
     //  console.log('sera called-',arguments);
@@ -254,7 +255,7 @@ class AutocompletePrompt extends Base {
     // Store this promise for check in the callback
     self.lastPromise = thisPromise
 
-    return thisPromise.then(function inner(choices) {
+    return thisPromise.then((choices) => {
       // If another search is triggered before the current search finishes, don't set results
       if (thisPromise !== self.lastPromise) return
 
@@ -290,7 +291,7 @@ class AutocompletePrompt extends Base {
     let len
     const keyName = (e.key && e.key.name) || undefined
 
-    if (keyName === "tab" && this.opt.suggestOnly) {
+    if (keyName === 'tab' && this.opt.suggestOnly) {
       if (this.currentChoices.getChoice(this.selected)) {
         this.rl.write(ansiEscapes.cursorLeft)
         const autoCompleted = this.currentChoices.getChoice(this.selected).value
@@ -298,13 +299,13 @@ class AutocompletePrompt extends Base {
         this.rl.line = autoCompleted
         this.render()
       }
-    } else if (keyName === "down" || (keyName === "n" && e.key.ctrl)) {
+    } else if (keyName === 'down' || (keyName === 'n' && e.key.ctrl)) {
       len = this.nbChoices
       this.selected = this.selected < len - 1 ? this.selected + 1 : 0
       this.ensureSelectedInRange()
       this.render()
       utils.up(this.rl, 2)
-    } else if (keyName === "up" || (keyName === "p" && e.key.ctrl)) {
+    } else if (keyName === 'up' || (keyName === 'p' && e.key.ctrl)) {
       len = this.nbChoices
       this.selected = this.selected > 0 ? this.selected - 1 : len - 1
       this.ensureSelectedInRange()
@@ -327,41 +328,41 @@ class AutocompletePrompt extends Base {
  * @return {String}         Rendered content
  */
 function listRender(choices, pointer /*: string */) /*: string */ {
-  let output = ""
+  let output = ''
   let separatorOffset = 0
 
-  choices.forEach(function (choice, i) {
-    if (choice.type === "separator") {
+  choices.forEach((choice, i) => {
+    if (choice.type === 'separator') {
       separatorOffset++
-      output += "  " + choice + "\n"
+      output += `  ${  choice  }\n`
       return
     }
 
     if (choice.disabled) {
       separatorOffset++
-      output += "  - " + choice.name
+      output += `  - ${  choice.name}`
       output +=
-        " (" +
-        (typeof choice.disabled === "string" ? choice.disabled : "Disabled") +
-        ")"
-      output += "\n"
+        ` (${ 
+        typeof choice.disabled === 'string' ? choice.disabled : 'Disabled' 
+        })`
+      output += '\n'
       return
     }
 
     const isSelected = i - separatorOffset === pointer
-    let line = (isSelected ? figures.pointer + " " : "  ") + choice.name
+    let line = (isSelected ? `${figures.pointer  } ` : '  ') + choice.name
 
     if (isSelected) {
       line = chalk.cyan(line)
     }
-    output += line + " \n"
+    output += `${line  } \n`
   })
 
-  return output.replace(/\n$/, "")
+  return output.replace(/\n$/, '')
 }
 
 function isPromise(value) {
-  return typeof value === "object" && typeof value.then === "function"
+  return typeof value === 'object' && typeof value.then === 'function'
 }
 
 module.exports = AutocompletePrompt

@@ -1,5 +1,5 @@
-//TODO -- could retry 3 times.
-const axios = require("axios")
+// TODO -- could retry 3 times.
+const axios = require('axios')
 
 module.exports = getSignedInUser
 /**
@@ -28,18 +28,18 @@ async function getSignedInUser(TOKEN) {
           id
         }
       }`
-  const url = "https://api.github.com/graphql"
+  const url = 'https://api.github.com/graphql'
   const headers = {
-    "Content-Type": "application/json",
-    Authorization: "bearer " + TOKEN,
-    Accept: "application/vnd.github.v4+json",
+    'Content-Type': 'application/json',
+    Authorization: `bearer ${  TOKEN}`,
+    Accept: 'application/vnd.github.v4+json',
   }
   try {
     // Check if TOKEN still working
     const response = await axios.post(
       url,
-      { query: query },
-      { headers: headers }
+      { query },
+      { headers }
     )
     return {
       user: {
@@ -55,10 +55,10 @@ async function getSignedInUser(TOKEN) {
     // else retry with 1sec delay
     if (e.response.status == 401) {
       return { user: null, error: e.response.statusText }
-    } else {
-      //retry here
-      //TODO
+    } 
+      // retry here
+      // TODO
       process.exit(0)
-    }
+    
   }
 }

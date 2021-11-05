@@ -15,5 +15,5 @@
     "rest-spread-spacing": "warn",
     "quotes": "error"
   },
-  "extends": ["eslint:recommended", "prettier"]
+  "extends": ["airbnb-base", "prettier"]
 }
