@@ -1,0 +1,57 @@
+{
+  "name": "appblox-cli",
+  "version": "1.0.0",
+  "description": "CLI tool for appblox",
+  "main": "./bin/index.js",
+  "bin": {
+    "appblox": "./bin/index.js"
+  },
+  "scripts": {
+    "prepare": "npx husky install",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "npx eslint ./**/*.js --fix",
+    "format": "npx prettier ./**/*{.js,.json} --write",
+    "pre-commit": "npx lint-staged"
+  },
+  "lint-staged": {
+    "*.js": [
+      "npm run lint",
+      "npm run format"
+    ]
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ansi-escapes": "^4.3.2",
+    "axios": "^0.21.4",
+    "chalk": "^4.1.2",
+    "cli-cursor": "^3.1.0",
+    "commander": "^8.2.0",
+    "dotenv": "^10.0.0",
+    "figlet": "^1.5.2",
+    "figures": "^3.2.0",
+    "inquirer": "^8.1.5",
+    "inquirer-autocomplete-prompt": "^1.4.0",
+    "inquirer-file-tree-selection-prompt": "^1.0.12",
+    "run-async": "^2.4.1",
+    "rxjs": "^7.3.0",
+    "yargs": "^17.1.1"
+  },
+  "devDependencies": {
+    "@types/axios": "^0.14.0",
+    "@types/chalk": "^2.2.0",
+    "@types/cli-cursor": "^3.0.1",
+    "@types/commander": "^2.12.2",
+    "@types/dotenv": "^8.2.0",
+    "@types/eslint": "^7.28.1",
+    "@types/inquirer": "^8.1.1",
+    "@types/node": "^16.9.6",
+    "@types/rx": "^4.1.2",
+    "eslint": "^8.0.1",
+    "eslint-config-prettier": "^8.3.0",
+    "husky": "^7.0.0",
+    "lint-staged": "^11.2.3",
+    "prettier": "^2.4.1",
+    "winston": "^3.3.3"
+  }
+}
