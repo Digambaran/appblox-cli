@@ -9,15 +9,16 @@ const path = require('path')
 const axios = require('axios')
 const inquirer = require('inquirer')
 const fs = require('fs')
+const dotEnv = require('dotenv')
 const { Command } = require('commander')
 // eslint-disable-next-line no-unused-vars
 const { Observable, Subscriber, noop } = require('rxjs')
 // UTILS
-const Art = require('../utils/art.js')
-const pbcopy = require('../utils/clipcopy.js')
+const Art = require('../utils/art')
+const pbcopy = require('../utils/clipcopy')
 const getSignedInUser = require('../utils/getSignedInUser')
 const OTPConfirmation = require('../utils/OTPConfirmation')
-const { newls } = require('../utils/listandselectrepos')
+const { NewLS } = require('../utils/listandselectrepos')
 const { userRepos, userOrgs, orgTeams } = require('../utils/Queries')
 const parseResponse = require('../utils/parseResponse')
 
@@ -25,9 +26,40 @@ const packageJson = require('../package.json')
 const {
   cloneTemplateRepository,
   createRepository,
-} = require('../utils/Mutations.js')
+} = require('../utils/Mutations')
 
 let pathToENV = path.resolve('./.env')
+
+function openBrowser() {
+  return new Promise((res, rej) =>
+    exec(`start ${url}`, (error, stdout, stderr) => {
+      if (error) {
+        // console.log(`error: ${error.message}`);
+        rej(error)
+      }
+      if (stderr) {
+        // console.log(`stderr: ${stderr}`);
+        rej(stderr)
+      }
+      // console.log(`stdout: ${stdout}`);
+      res('good')
+    })
+  )
+}
+function TimerThread(seconds) {
+  const cpf = fork(path.join(__dirname, 'timer.js'), [seconds])
+  // console.log('pid-',cpf.pid);
+  // console.log('Thread started for ', seconds);
+  cpf.on('message', (m) => {
+    // console.log(m);
+    if (m === 'STOP') {
+      process.exit(0)
+    }
+  })
+  // cpf.on('close',(c)=>console.log('timer stopped',c))
+  // cpf.on('exit',(c)=>console.log('timer stopped',c))
+  return cpf
+}
 
 const handleAuth = async (data) => {
   const OTPresponse = parseResponse(data)
@@ -51,55 +83,11 @@ const handleAuth = async (data) => {
   }
   const done = await OTPConfirmation(Cdata, getTokenURL, timerThread, pathToENV)
   if (done) return
-  
-    console.log('something went wrong')
-    process.exit(0)
-  
+
+  console.log('something went wrong')
+  process.exit(0)
 }
 
-function openBrowser() {
-  return new Promise((res, rej) =>
-    exec(`start ${  url}`, (error, stdout, stderr) => {
-      if (error) {
-        // console.log(`error: ${error.message}`);
-        rej(error)
-      }
-      if (stderr) {
-        // console.log(`stderr: ${stderr}`);
-        rej(stderr)
-      }
-      // console.log(`stdout: ${stdout}`);
-      res('good')
-    })
-  )
-}
-
-async function checkAndSetAuth() {
-  const r = require('dotenv').config({ path: pathToENV })
-  // console.log(process.env.TOKEN);
-  if (r.error) {
-    // console.log('error reading env file', r.error);
-    // If in error because of any other reason,
-    // remove file and do new auth.
-    r.error.code !== 'ENOENT' && fs.unlinkSync(pathToENV)
-    console.log(chalk.red('Not signed in!'))
-    return { redoAuth: true }
-  } 
-    // make call to check if the user has revoked access,
-    // if not log the signed in name.
-    // else redo auth
-    const { user } = await getSignedInUser(process.env.TOKEN)
-    if (user && correctCredsInEnv(user.userName, user.userId)) {
-      console.log(`Signed in as ${chalk.whiteBright(user.userName)}`)
-      return { redoAuth: false }
-    } 
-      // console.log(error);
-      console.log('Not signed in, redirecting to signin!')
-      return { redoAuth: true }
-      // process.exit(0)
-    
-  
-}
 /**
  * Checks if Name and Id returned for given token is same as present in env
  * @param {string} name Login name returned from github for present token
@@ -108,6 +96,31 @@ async function checkAndSetAuth() {
  */
 function correctCredsInEnv(name, id) {
   return process.env.USER === name && process.env.USERID === id
+}
+
+async function checkAndSetAuth() {
+  const r = dotEnv.config({ path: pathToENV })
+  // console.log(process.env.TOKEN);
+  if (r.error) {
+    // console.log('error reading env file', r.error);
+    // If in error because of any other reason,
+    // remove file and do new auth.
+    if (r.error.code !== 'ENOENT') fs.unlinkSync(pathToENV)
+    console.log(chalk.red('Not signed in!'))
+    return { redoAuth: true }
+  }
+  // make call to check if the user has revoked access,
+  // if not log the signed in name.
+  // else redo auth
+  const { user } = await getSignedInUser(process.env.TOKEN)
+  if (user && correctCredsInEnv(user.userName, user.userId)) {
+    console.log(`Signed in as ${chalk.whiteBright(user.userName)}`)
+    return { redoAuth: false }
+  }
+  // console.log(error);
+  console.log('Not signed in, redirecting to signin!')
+  return { redoAuth: true }
+  // process.exit(0)
 }
 
 /**
@@ -123,10 +136,8 @@ function ensureDirSync(dir) {
     noop()
   }
   if (stats && stats.isDirectory()) return
-  
-    fs.mkdirSync(dir)
-    
-  
+
+  fs.mkdirSync(dir)
 }
 
 function createFileSync(file) {
@@ -161,7 +172,7 @@ function createprojectstructure(name) {
   ensureDirSync(root)
   process.chdir(root)
   fs.mkdirSync(path.resolve('HouseClient'))
-  fs.appendFileSync(pathToENV, `\nCLIENTHOUSE=${  path.resolve('HouseClient')}`)
+  fs.appendFileSync(pathToENV, `\nCLIENTHOUSE=${path.resolve('HouseClient')}`)
   // TODO--
   // create house client and container here, prompt for creating from template
   // map to env
@@ -172,7 +183,7 @@ const start = async (key, dir) => {
     // setting env path for before checkAndSetAuth and handleAuth
     pathToENV = path.resolve(dir, '.env')
     // if a new project then env parent directory might be missing, to avoid error in OTPConfirmation
-    key === 'newproject' && createFileSync(pathToENV)
+    if (key === 'newproject') createFileSync(pathToENV)
 
     const { redoAuth } = await checkAndSetAuth()
     if (redoAuth) {
@@ -215,21 +226,6 @@ const start = async (key, dir) => {
 
 // start();
 
-function TimerThread(seconds) {
-  const cpf = fork(path.join(__dirname, 'timer.js'), [seconds])
-  // console.log('pid-',cpf.pid);
-  // console.log('Thread started for ', seconds);
-  cpf.on('message', (m) => {
-    // console.log(m);
-    if (m === 'STOP') {
-      process.exit(0)
-    }
-  })
-  // cpf.on('close',(c)=>console.log('timer stopped',c))
-  // cpf.on('exit',(c)=>console.log('timer stopped',c))
-  return cpf
-}
-
 function init() {
   const program = new Command()
   const addC = program.command('add')
@@ -268,22 +264,22 @@ init()
  *
  * @returns {String|Number} Path string if env is found, else object with number of directories and files
  */
+// eslint-disable-next-line consistent-return
 function isDirClean() {
   const dir = process.cwd()
   try {
     const files = fs.readdirSync(dir)
     if (files.includes('.env')) {
       return dir
-    } 
-      return files.reduce(
-        (acc, file) => {
-          if (fs.statSync(path.resolve(file)).isDirectory())
-            return { ...acc, dirs: acc.dirs + 1 }
-          return { ...acc, files: acc.files + 1 }
-        },
-        { dirs: 0, files: 0 }
-      )
-    
+    }
+    return files.reduce(
+      (acc, file) => {
+        if (fs.statSync(path.resolve(file)).isDirectory())
+          return { ...acc, dirs: acc.dirs + 1 }
+        return { ...acc, files: acc.files + 1 }
+      },
+      { dirs: 0, files: 0 }
+    )
   } catch (e) {
     console.log(e)
     process.exit(1)
@@ -313,7 +309,7 @@ function wipeAllFilesIn(dir) {
   console.log('wiping in ', dir)
   const files = fs.readdirSync(dir)
   try {
-    for (let i = 0; i < files.length; i++) {
+    for (let i = 0; i < files.length; i += 1) {
       console.log('Removing ', path.join(dir, files[i]))
       fs.rmSync(path.join(dir, files[i]), { recursive: true, force: true })
     }
@@ -340,7 +336,7 @@ async function fieldTest(dirName) {
    */
   if (typeof penv === 'string') {
     // TODO -- find and set pathToENV here
-    const trr = require('dotenv').config({ path: path.join(penv, '.env') })
+    const trr = dotEnv.config({ path: path.join(penv, '.env') })
     if (!trr.error) {
       const prname = process.env.PROJECT
       console.log(`Found project ${chalk.gray(prname)}`)
@@ -365,15 +361,14 @@ async function fieldTest(dirName) {
   if (wipeAll) {
     wipeAllFilesIn(process.cwd())
     return true
-  } 
-    // TODO-- Display current project details here if existing project is found
-    // Might not always contain projects, so handle the Update project logic here itself.
-    // console.log("Current project details-")
-    // console.log("User - ", process.env.USER)
-    // console.log("Project - ", process.env.PROJECT)
-    // console.log("Paths and such here")
-    return false
-  
+  }
+  // TODO-- Display current project details here if existing project is found
+  // Might not always contain projects, so handle the Update project logic here itself.
+  // console.log("Current project details-")
+  // console.log("User - ", process.env.USER)
+  // console.log("Project - ", process.env.PROJECT)
+  // console.log("Paths and such here")
+  return false
 }
 
 function getTemplateV2() {
@@ -388,7 +383,7 @@ function getTemplateV2() {
       name: 'selectTemplate',
       message: 'select a template repo',
       choices: [], // give empty list, custom list loads from api
-      source: new newls(userRepos.Q, userRepos.Tr_t).sourceAll,
+      source: new NewLS(userRepos.Q, userRepos.Tr_t).sourceAll,
       pageSize: 22,
       loop: false,
       when: (ans) => ans.createFromTemplate,
@@ -411,7 +406,7 @@ function getOrgId() {
       name: 'selectOrg',
       message: 'select a organization',
       choices: [], // give empty list, loads initial set
-      source: new newls(userOrgs.Q, userOrgs.Tr).sourceB,
+      source: new NewLS(userOrgs.Q, userOrgs.Tr).sourceB,
       pageSize: 22,
     },
   ]
@@ -473,7 +468,7 @@ async function createRepo(ownerId, ownerType, orgName) {
       type: 'list',
       message: 'select team to give access',
       name: 'selectTeam',
-      choices: () => new newls(orgTeams.Q, orgTeams.Tr).sourceAll(orgName),
+      choices: () => new NewLS(orgTeams.Q, orgTeams.Tr).sourceAll(orgName),
     })
   }
   const ans = await inquirer.prompt(questions)
@@ -485,7 +480,7 @@ async function createRepo(ownerId, ownerType, orgName) {
   const headersV4 = {
     'Content-Type': 'application/json',
     // 'Authorization': 'bearer ' + obj['access_token'],
-    Authorization: `bearer ${  process.env.TOKEN}`,
+    Authorization: `bearer ${process.env.TOKEN}`,
     Accept: 'application/vnd.github.v4+json',
   }
   try {
@@ -509,15 +504,15 @@ async function createRepo(ownerId, ownerType, orgName) {
       // TODO -- write data.errors.message to combined log here
       console.log(data.errors)
       throw new Error(
-        `Something went wrong with query,\n${  data.errors.message}`
+        `Something went wrong with query,\n${data.errors.message}`
       )
     }
     const repoUrl = template
       ? cloneTemplateRepository.Tr(data)
       : createRepository.Tr(data)
-    execSync(`git clone ${  repoUrl}`, { stdio: 'inherit' })
+    execSync(`git clone ${repoUrl}`, { stdio: 'inherit' })
     console.log(chalk.green('Successfully Cloned!'))
   } catch (err) {
-    console.log(chalk.red(`<<${  err.message  }>>`))
+    console.log(chalk.red(`<<${err.message}>>`))
   }
 }

@@ -9,7 +9,6 @@
  * if user gives NO, reconfirm and inform and ABORT
  */
 
-
 // eslint-disable-next-line no-unused-vars
 const { ChildProcess } = require('child_process')
 const inquirer = require('inquirer')
@@ -25,6 +24,16 @@ const parseResponse = require('./parseResponse')
  * @type {Subscriber}
  */
 let Emitter
+
+/**
+ * Shows message and exits.
+ * @param {string} msg Message to show.
+ */
+function Abort(msg) {
+  // eslint-disable-next-line no-console
+  console.log(`Aborting ${msg}`)
+  process.exit(0)
+}
 
 // TODO -- killing thread, is it a good choice? could use .kill ??
 
@@ -72,13 +81,13 @@ function handleTokenError(msg, thread, count) {
     case 'authorization_pending':
       // Ask user to give access, maybe show the code again or copy it
       // to clipboard, give hints
-      ;(count == 1 || count == 2) &&
+      if (count === 1 || count === 2)
         console.log(
           "Seems like authorization is still pending..\nPlease go to https://github.com/login/device, and paste the above code.'"
         )
 
-      count == 3 && console.log('Nope! still not authorized')
-      count == 4 && console.log('Last chance!! You can do it..')
+      if (count === 3) console.log('Nope! still not authorized')
+      if (count === 4) console.log('Last chance!! You can do it..')
       if (count === 5) {
         console.log('Whew..whatever.')
         thread.send('KILLTIMER') // just to be safe
@@ -95,7 +104,7 @@ function handleTokenError(msg, thread, count) {
     case 'expired_token':
       // Most probably wont happen, as timer would have killed the process already
       // if happens, abort and restart process
-      !thread.killed && thread.send('KILLTIMER') // just to be safe
+      if (!thread.killed) thread.send('KILLTIMER') // just to be safe
       Abort('Token expired')
       break
     default:
@@ -133,7 +142,7 @@ async function OTPVerify(data, url, thread, pathToENV) {
         // console.log(ans);
         switch (name) {
           case 'authConfirm':
-            authYesRetryCount++
+            authYesRetryCount += 1
             if (answer) {
               // TODO - give a loading screen
               try {
@@ -153,9 +162,7 @@ async function OTPVerify(data, url, thread, pathToENV) {
                   // if device code has expired - expired_token
                   throw new Error(TokenData.error)
                 }
-                const { user } = await getSignedInUser(
-                  TokenData.access_token
-                )
+                const { user } = await getSignedInUser(TokenData.access_token)
                 if (user) {
                   // Remove the loading screen
                   process.env.TOKEN = TokenData.access_token
@@ -192,9 +199,9 @@ async function OTPVerify(data, url, thread, pathToENV) {
             }
             break
           case 'abortConfirmation':
-            abortYesNoCount++
+            abortYesNoCount += 1
             if (answer) {
-              !thread.killed && thread.send('KILLTIMER')
+              if (!thread.killed) thread.send('KILLTIMER')
               Emitter.complete()
               Abort('User aborted!')
             } else {
@@ -202,7 +209,7 @@ async function OTPVerify(data, url, thread, pathToENV) {
               if (abortYesNoCount === 5) {
                 console.log('I have better things to do with my life!!')
                 console.log('Aborting')
-                !thread.killed && thread.send('KILLTIMER')
+                if (!thread.killed) thread.send('KILLTIMER')
                 Abort('Make up your mind!!')
               }
               // TODO -- add more comments
@@ -220,12 +227,7 @@ async function OTPVerify(data, url, thread, pathToENV) {
               // TODO--causes error- not access to TokenData
               fs.writeFileSync(
                 pathToENV,
-                `TOKEN=${ 
-                  process.env.TOKEN 
-                  }\nREFRESH=0\nUSER=${ 
-                  process.env.USER 
-                  }\nUSERID=${ 
-                  process.env.USERID}`
+                `TOKEN=${process.env.TOKEN}\nREFRESH=0\nUSER=${process.env.USER}\nUSERID=${process.env.USERID}`
               )
               Emitter.complete()
             } else {
@@ -250,12 +252,4 @@ async function OTPVerify(data, url, thread, pathToENV) {
   )
 }
 
-/**
- * Shows message and exits.
- * @param {string} msg Message to show.
- */
-function Abort(msg) {
-  console.log(`Aborting ${  msg}`)
-  process.exit(0)
-}
 module.exports = OTPVerify

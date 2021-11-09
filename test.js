@@ -1,5 +1,4 @@
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-undef */
+/* eslint-disable */
 const path = require('path')
 const fs = require('fs')
 const readline = require('readline')
@@ -236,7 +235,7 @@ function updateProjectDetails() {
           break
         case 'changeHousing':
           process.env.HF = answer
-          fs.appendFileSync(path.resolve('./.env'), `\nHF=${  answer}`)
+          fs.appendFileSync(path.resolve('./.env'), `\nHF=${answer}`)
           console.log('Update env with path -', answer)
           Emitter.next({
             type: 'input',
@@ -264,8 +263,8 @@ const getAllFilesRecursively = function (dirPath, arrayOfFiles) {
   const files = fs.readdirSync(dirPath)
   arrayOfFiles = arrayOfFiles || []
   files.forEach((file) => {
-    if (fs.statSync(`${dirPath  }/${  file}`).isDirectory()) {
-      arrayOfFiles = getAllFilesRecursively(`${dirPath  }/${  file}`, arrayOfFiles)
+    if (fs.statSync(`${dirPath}/${file}`).isDirectory()) {
+      arrayOfFiles = getAllFilesRecursively(`${dirPath}/${file}`, arrayOfFiles)
     } else {
       arrayOfFiles.push(path.join(__dirname, dirPath, '/', file))
     }

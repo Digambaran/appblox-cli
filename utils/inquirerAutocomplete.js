@@ -54,6 +54,7 @@ class AutocompletePrompt extends Base {
    * @param  {Function} cb      Callback when prompt is done
    * @return {this}
    */
+  // eslint-disable-next-line no-underscore-dangle
   _run(cb /*: Function */) /*: this */ {
     this.done = cb
 
@@ -92,18 +93,16 @@ class AutocompletePrompt extends Base {
 
     if (this.firstRender) {
       const suggestText = this.opt.suggestOnly ? ', tab to autocomplete' : ''
-      content += chalk.dim(
-        `(Use arrow keys or type to search${  suggestText  })`
-      )
+      content += chalk.dim(`(Use arrow keys or type to search${suggestText})`)
     }
     // Render choices or answer depending on the state
     if (this.status === 'answered') {
       content += chalk.cyan(this.shortAnswer || this.answerName || this.answer)
     } else if (this.searching) {
       content += this.rl.line
-      bottomContent += `  ${  chalk.dim(this.opt.searchText || 'Searching...')}`
+      bottomContent += `  ${chalk.dim(this.opt.searchText || 'Searching...')}`
     } else if (this.yetToType) {
-      bottomContent += `  ${  chalk.dim('start typing...')}`
+      bottomContent += `  ${chalk.dim('start typing...')}`
     } else if (this.nbChoices) {
       const choicesStr = listRender(this.currentChoices, this.selected)
       content += this.rl.line
@@ -124,12 +123,13 @@ class AutocompletePrompt extends Base {
       )
     } else {
       content += this.rl.line
-      bottomContent +=
-        `  ${  chalk.yellow(this.opt.emptyText || 'No results...')}`
+      bottomContent += `  ${chalk.yellow(
+        this.opt.emptyText || 'No results...'
+      )}`
     }
 
     if (error) {
-      bottomContent += `\n${  chalk.red('>> ')  }${error}`
+      bottomContent += `\n${chalk.red('>> ')}${error}`
     }
 
     this.firstRender = false
@@ -199,7 +199,8 @@ class AutocompletePrompt extends Base {
       if (choice.value === 'LoadMore') {
         this.search('', 'after')
         return
-      } if (choice.value === 'LoadPrev') {
+      }
+      if (choice.value === 'LoadPrev') {
         this.search('', 'before')
         return
       }
@@ -228,8 +229,8 @@ class AutocompletePrompt extends Base {
     })(choice.value)
   }
 
-  search(/* : ?string */) {
-    const searchTerm = arguments[0] || 'A'
+  search(s, p) {
+    const searchTerm = s || 'A'
     const self = this
     self.selected = 0
     //  console.log('sera called-',arguments);
@@ -246,7 +247,7 @@ class AutocompletePrompt extends Base {
 
     let thisPromise
     try {
-      const result = self.opt.source(self.answers, searchTerm, arguments[1])
+      const result = self.opt.source(self.answers, searchTerm, p)
       thisPromise = Promise.resolve(result)
     } catch (error) {
       thisPromise = Promise.reject(error)
@@ -314,7 +315,11 @@ class AutocompletePrompt extends Base {
       this.render() // Render input automatically
       // Only search if input have actually changed, not because of other keypresses
       const newLine = this.rl.line.trim()
-      newLine ? (this.yetToType = false) : (this.yetToType = true)
+      if (newLine) {
+        this.yetToType = false
+      } else {
+        this.yetToType = true
+      }
       if (this.lastSearchTerm !== newLine) {
         this.search(newLine) // Trigger new search
       }
@@ -333,29 +338,28 @@ function listRender(choices, pointer /*: string */) /*: string */ {
 
   choices.forEach((choice, i) => {
     if (choice.type === 'separator') {
-      separatorOffset++
-      output += `  ${  choice  }\n`
+      separatorOffset += 1
+      output += `  ${choice}\n`
       return
     }
 
     if (choice.disabled) {
-      separatorOffset++
-      output += `  - ${  choice.name}`
-      output +=
-        ` (${ 
-        typeof choice.disabled === 'string' ? choice.disabled : 'Disabled' 
-        })`
+      separatorOffset += 1
+      output += `  - ${choice.name}`
+      output += ` (${
+        typeof choice.disabled === 'string' ? choice.disabled : 'Disabled'
+      })`
       output += '\n'
       return
     }
 
     const isSelected = i - separatorOffset === pointer
-    let line = (isSelected ? `${figures.pointer  } ` : '  ') + choice.name
+    let line = (isSelected ? `${figures.pointer} ` : '  ') + choice.name
 
     if (isSelected) {
       line = chalk.cyan(line)
     }
-    output += `${line  } \n`
+    output += `${line} \n`
   })
 
   return output.replace(/\n$/, '')

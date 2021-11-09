@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 const figlet = require('figlet')
 
 module.exports = function Art(n) {

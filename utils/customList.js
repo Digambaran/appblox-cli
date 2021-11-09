@@ -10,6 +10,7 @@ const runAsync = require('run-async')
  * else error
  */
 class CustomList extends ListPrompt {
+  // eslint-disable-next-line no-useless-constructor
   constructor(questions, rl, answers) {
     super(questions, rl, answers)
   }
@@ -19,6 +20,7 @@ class CustomList extends ListPrompt {
    * @param  {Function} cb      Callback when prompt is done
    * @return {this}
    */
+  // eslint-disable-next-line no-underscore-dangle
   _run(cb) {
     this.done = cb
 
@@ -51,9 +53,7 @@ class CustomList extends ListPrompt {
     // Init the prompt
     cliCursor.hide()
     if (self.firstRender) {
-      Promise.resolve(self.opt.source(null, null, null)).then((
-        choices
-      ) => {
+      Promise.resolve(self.opt.source(null, null, null)).then((choices) => {
         self.opt.choices = new Choices(choices)
         self.render()
       })
@@ -80,6 +80,7 @@ class CustomList extends ListPrompt {
     this.render()
   }
 
+  // eslint-disable-next-line consistent-return
   onSubmit(value) {
     const self = this
     switch (value) {
