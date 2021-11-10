@@ -1,8 +1,9 @@
-const { exec } = require("child_process")
+/* eslint-disable no-console */
+const { exec } = require('child_process')
 
 module.exports = function pbcopy(data) {
-  //TODO--make it work for all terminals
-  exec("echo | set /p=" + data + "| clip", (error, stdout, stderr) => {
+  // TODO--make it work for all terminals
+  exec(`echo | set /p=${data}| clip`, (error, stdout, stderr) => {
     if (error) {
       console.log(`error: ${error.message}`)
       return
@@ -11,7 +12,6 @@ module.exports = function pbcopy(data) {
       console.log(`stderr: ${stderr}`)
       return
     }
-    console.log("Code copied to Clipboard!!")
+    console.log('Code copied to Clipboard!!')
   })
-  return
 }

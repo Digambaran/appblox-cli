@@ -1,8 +1,7 @@
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-undef */
-const path = require("path")
-const fs = require("fs")
-const readline = require("readline")
+/* eslint-disable */
+const path = require('path')
+const fs = require('fs')
+const readline = require('readline')
 
 !(function t() {
   const rl = readline.createInterface({
@@ -10,16 +9,16 @@ const readline = require("readline")
     output: process.stdout,
   })
 
-  rl.question("Where do you live ? ", function (country) {
+  rl.question('Where do you live ? ', (country) => {
     console.log(country)
-    const root = path.resolve(country, "se")
+    const root = path.resolve(country, 'se')
     const parent = path.dirname(root)
     const appName = path.basename(root)
-    console.log("parent", parent, root)
+    console.log('parent', parent, root)
     try {
       const files = fs.readdirSync(root)
-      if (files.includes(".env")) {
-        console.log("Found env")
+      if (files.includes('.env')) {
+        console.log('Found env')
       }
       const ans = files.reduce(
         (acc, file) => {
@@ -27,10 +26,10 @@ const readline = require("readline")
           const stat = fs.statSync(p)
 
           console.log(
-            `${p} is ${stat.isDirectory() ? "a " : "not a"} directory`
+            `${p} is ${stat.isDirectory() ? 'a ' : 'not a'} directory`
           )
           if (stat.isDirectory()) return { ...acc, dirs: acc.dirs + 1 }
-          else return { ...acc, files: acc.files + 1 }
+          return { ...acc, files: acc.files + 1 }
         },
         { dirs: 0, files: 0 }
       )
@@ -46,29 +45,29 @@ const readline = require("readline")
       console.log(ssstat)
       const dir = fs.readdirSync(root)
     } catch (e) {
-      console.log("error1", e)
+      console.log('error1', e)
     }
     try {
       const dir = fs.opendirSync(root)
     } catch (e) {
-      console.log("error2", e)
+      console.log('error2', e)
     }
     console.log(root, appName)
     rl.close(country)
   })
 
-  rl.on("close", function () {
-    console.log("\nBYE BYE !!!")
+  rl.on('close', () => {
+    console.log('\nBYE BYE !!!')
     process.exit(0)
   })
 })()
 
 function demo() {
   inquirer.registerPrompt(
-    "file-tree-selection",
-    require("inquirer-file-tree-selection-prompt")
+    'file-tree-selection',
+    require('inquirer-file-tree-selection-prompt')
   )
-  inquirer.registerPrompt("customList", require("../utils/customList"))
+  inquirer.registerPrompt('customList', require('../utils/customList'))
 
   /**
    * @type {Subscriber}
@@ -77,52 +76,52 @@ function demo() {
   const stream = new Observable((obs) => {
     Emitter = obs
     obs.next({
-      type: "confirm",
-      name: "alreadyARepo",
-      message: "Already a repo",
+      type: 'confirm',
+      name: 'alreadyARepo',
+      message: 'Already a repo',
     })
   })
   inquirer.prompt(stream).ui.process.subscribe({
     next: async (ans) => {
       const { name, answer } = ans
       switch (name) {
-        case "alreadyARepo":
+        case 'alreadyARepo':
           if (answer) {
             //
-            //User says already a housing repo
-            //Check for specific files that can confirm the claim
-            //TODO--check if really a housing repo
+            // User says already a housing repo
+            // Check for specific files that can confirm the claim
+            // TODO--check if really a housing repo
             //
             Emitter.next({
-              type: "file-tree-selection",
-              name: "housingFolder",
-              message: "Point me to house folder",
+              type: 'file-tree-selection',
+              name: 'housingFolder',
+              message: 'Point me to house folder',
               onlyShowDir: true,
             })
           } else {
-            //TODO -- initialize files to make a housing folder
+            // TODO -- initialize files to make a housing folder
           }
           break
-        case "housingFolder":
+        case 'housingFolder':
           // console.log('selected Dir', answer);
           // TODO--set in env
           // TODO--check if .gitmodules folder is present
           Emitter.next({
-            type: "list",
-            message: "where to create repo",
-            name: "where",
+            type: 'list',
+            message: 'where to create repo',
+            name: 'where',
             choices: [
-              { name: "my git name", value: "my git", short: "sdfsdfsd" },
-              "org git",
+              { name: 'my git name', value: 'my git', short: 'sdfsdfsd' },
+              'org git',
             ],
           })
           break
-        case "where":
-          //show  templates after selecting template
-          //TODO--list only orgs with write access, change query in QUERIES accordingly
-          if (answer === "my git") {
-            //create a repo
-            createRepo(process.env.USERID, "user", null)
+        case 'where':
+          // show  templates after selecting template
+          // TODO--list only orgs with write access, change query in QUERIES accordingly
+          if (answer === 'my git') {
+            // create a repo
+            createRepo(process.env.USERID, 'user', null)
             // if (template) {
             //   //TODO -- make call to create a repo from a template
             // } else {
@@ -134,7 +133,7 @@ function demo() {
              * @type {String}
              */
             const [orgName, orgId] = await getOrgId()
-            createRepo(orgId, "org", orgName)
+            createRepo(orgId, 'org', orgName)
             // list orgs
           }
           break
@@ -150,12 +149,12 @@ function demo() {
 }
 
 function CreateNewProject() {
-  console.log("Creating new project")
+  console.log('Creating new project')
   inquirer.registerPrompt(
-    "file-tree-selection",
-    require("inquirer-file-tree-selection-prompt")
+    'file-tree-selection',
+    require('inquirer-file-tree-selection-prompt')
   )
-  inquirer.registerPrompt("customList", require("../utils/customList"))
+  inquirer.registerPrompt('customList', require('../utils/customList'))
 
   /**
    * @type {Subscriber}
@@ -164,21 +163,21 @@ function CreateNewProject() {
   const stream = new Observable((obs) => {
     Emitter = obs
     obs.next({
-      type: "list",
-      message: "where to create repo",
-      name: "where",
-      choices: ["my git", "org git"],
+      type: 'list',
+      message: 'where to create repo',
+      name: 'where',
+      choices: ['my git', 'org git'],
     })
   })
   inquirer.prompt(stream).ui.process.subscribe({
     next: async (ans) => {
       const { name, answer } = ans
       switch (name) {
-        case "where":
-          //TODO--list only orgs with write access, change query in QUERIES accordingly
-          if (answer === "my git") {
-            //create a repo
-            createRepo(process.env.USERID, "user", null)
+        case 'where':
+          // TODO--list only orgs with write access, change query in QUERIES accordingly
+          if (answer === 'my git') {
+            // create a repo
+            createRepo(process.env.USERID, 'user', null)
             //   //TODO--create a repo,
             //   //    --Ask user if readme liscence etc need be created
           } else {
@@ -186,7 +185,7 @@ function CreateNewProject() {
              * @type {String}
              */
             const [orgName, orgId] = await getOrgId()
-            createRepo(orgId, "org", orgName)
+            createRepo(orgId, 'org', orgName)
           }
           break
         default:
@@ -202,10 +201,10 @@ function CreateNewProject() {
 
 function updateProjectDetails() {
   inquirer.registerPrompt(
-    "file-tree-selection",
-    require("inquirer-file-tree-selection-prompt")
+    'file-tree-selection',
+    require('inquirer-file-tree-selection-prompt')
   )
-  inquirer.registerPrompt("customList", require("../utils/customList"))
+  inquirer.registerPrompt('customList', require('../utils/customList'))
 
   /**
    * @type {Subscriber}
@@ -214,38 +213,38 @@ function updateProjectDetails() {
   const stream = new Observable((obs) => {
     Emitter = obs
     obs.next({
-      type: "confirm",
-      name: "changeUser",
-      message: "Change Logged in User",
+      type: 'confirm',
+      name: 'changeUser',
+      message: 'Change Logged in User',
     })
   })
   inquirer.prompt(stream).ui.process.subscribe({
     next: async (ans) => {
       const { name, answer } = ans
       switch (name) {
-        case "changeUser":
+        case 'changeUser':
           if (answer) {
-            console.log("Will run auth again here")
+            console.log('Will run auth again here')
           }
           Emitter.next({
-            type: "file-tree-selection",
-            name: "changeHousing",
-            message: "Point me to house folder",
+            type: 'file-tree-selection',
+            name: 'changeHousing',
+            message: 'Point me to house folder',
             onlyShowDir: true,
           })
           break
-        case "changeHousing":
+        case 'changeHousing':
           process.env.HF = answer
-          fs.appendFileSync(path.resolve("./.env"), "\nHF=" + answer)
-          console.log("Update env with path -", answer)
+          fs.appendFileSync(path.resolve('./.env'), `\nHF=${answer}`)
+          console.log('Update env with path -', answer)
           Emitter.next({
-            type: "input",
-            name: "changePrefix",
-            message: "new prefix word",
+            type: 'input',
+            name: 'changePrefix',
+            message: 'new prefix word',
           })
           break
-        case "changePrefix":
-          console.log("Update prefix here with-", answer)
+        case 'changePrefix':
+          console.log('Update prefix here with-', answer)
           Emitter.complete()
           break
         default:
@@ -254,7 +253,7 @@ function updateProjectDetails() {
     },
     error: () => {},
     complete: (c) => {
-      console.log("Project updated successfully")
+      console.log('Project updated successfully')
       console.log(c)
     },
   })
@@ -263,11 +262,11 @@ function updateProjectDetails() {
 const getAllFilesRecursively = function (dirPath, arrayOfFiles) {
   const files = fs.readdirSync(dirPath)
   arrayOfFiles = arrayOfFiles || []
-  files.forEach(function (file) {
-    if (fs.statSync(dirPath + "/" + file).isDirectory()) {
-      arrayOfFiles = getAllFilesRecursively(dirPath + "/" + file, arrayOfFiles)
+  files.forEach((file) => {
+    if (fs.statSync(`${dirPath}/${file}`).isDirectory()) {
+      arrayOfFiles = getAllFilesRecursively(`${dirPath}/${file}`, arrayOfFiles)
     } else {
-      arrayOfFiles.push(path.join(__dirname, dirPath, "/", file))
+      arrayOfFiles.push(path.join(__dirname, dirPath, '/', file))
     }
   })
   return arrayOfFiles
