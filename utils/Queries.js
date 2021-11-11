@@ -25,6 +25,10 @@ const userReposTr = ({ data: { data } }, sieve) => {
 const templateSieve = (r) => r.node.isTemplate
 const userReposTrTemplate = (data) =>
   userReposTr.apply(null, [data, templateSieve])
+const userReposTrURL = ({data:{data}})=>{
+  const list = data.user.repositories.edges.map((r)=>({name:r.node.name,value:r.node.url}))
+  return {list,...data.user.repositories.pageInfo}
+}
 
 const userRepos = `
 query($user:String!,$first:Int,$last:Int,$before:String,$after:String){
@@ -43,6 +47,7 @@ query($user:String!,$first:Int,$last:Int,$before:String,$after:String){
             isTemplate
             name
             description
+            url
           }
         }
       }
@@ -244,7 +249,7 @@ module.exports = {
   listVersions: { Q: listVersions, Tr: listVersionsTr },
   listFlavours: { Q: listFlavours, Tr: listFlavoursTR },
   searchGit: { Q: searchGit, Tr: searchGitTr },
-  userRepos: { Q: userRepos, Tr: userReposTr, Tr_t: userReposTrTemplate },
+  userRepos: { Q: userRepos, Tr: userReposTr, Tr_t: userReposTrTemplate,Tr_URL:userReposTrURL },
   userOrgs: { Q: userOrgs, Tr: userOrgsTR },
   appBloxRepos: { Q: appBloxRepos, Tr: appBloxReposTR },
   orgTeams: { Q: listTeams, Tr: listTeamsTr },

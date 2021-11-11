@@ -171,14 +171,20 @@ function createprojectstructure(name) {
   // TODO--Check if parent name is okay here
   ensureDirSync(root)
   process.chdir(root)
-  fs.mkdirSync(path.resolve('HouseClient'))
-  fs.appendFileSync(pathToENV, `\nCLIENTHOUSE=${path.resolve('HouseClient')}`)
+  if(!isInGitRepository()){
+    if(tryGitInit()){
+
+    }
+    fs.mkdirSync(path.resolve('HouseClient'))
+    fs.appendFileSync(pathToENV, `\nCLIENTHOUSE=${path.resolve('HouseClient')}`)
+  }
   // TODO--
   // create house client and container here, prompt for creating from template
   // map to env
 }
 
 const start = async (key, dir) => {
+  inquirer.resgisterPrompt('customList',require('../utils/customList'))
   try {
     // setting env path for before checkAndSetAuth and handleAuth
     pathToENV = path.resolve(dir, '.env')
@@ -202,15 +208,14 @@ const start = async (key, dir) => {
         createprojectstructure(dir)
         break
       case 'updateproject':
-        console.log(dir)
-        createprojectstructure(dir)
-        // updateProjectDetails()
+        updateProjectDetails()
         break
       case 'newcomponent':
-        console.log('creaete new repo')
-        console.log('move to -', process.env.HF)
-        console.log('init as submodules')
-        console.log('done')
+        process.chdir(process.env.CLIENTHOUSE);
+        if(!isInGitRepository()) throw new Error("Git not initialized");
+        getRepoURL().then((v)=>{
+          execSync("git submodule add "+v)
+        })
         createRepo()
         break
       default:
@@ -228,12 +233,12 @@ const start = async (key, dir) => {
 
 function init() {
   const program = new Command()
-  const addC = program.command('add')
+  const Init = program.command('init')
+  const Add = program.command('add')
   // TODO -- get version properly
   program.version(packageJson.version)
 
-  program
-    .command('init')
+  Init
     .arguments('<project-directory>')
     .description('start everything')
     .action(async (name) => {
@@ -248,13 +253,14 @@ function init() {
       }
     })
 
-  addC
+  Add
     .command('component')
+    .argument('[directory]','Root of project','.')
     .description('to add')
-    .action((values) => {
-      console.log(values)
-      start('newcomponent')
+    .action((path) => {
+      start('newcomponent',path)
     })
+
   program.parse(process.argv)
 }
 
@@ -265,8 +271,8 @@ init()
  * @returns {String|Number} Path string if env is found, else object with number of directories and files
  */
 // eslint-disable-next-line consistent-return
-function isDirClean() {
-  const dir = process.cwd()
+function isDirClean(dir) {
+  // const dir = process.cwd()
   try {
     const files = fs.readdirSync(dir)
     if (files.includes('.env')) {
@@ -281,8 +287,7 @@ function isDirClean() {
       { dirs: 0, files: 0 }
     )
   } catch (e) {
-    console.log(e)
-    process.exit(1)
+    if(e.code === 'ENOENT') return { dirs: 0, files: 0}
   }
   // console.log(dir);
   // console.log(process.cwd());
@@ -327,7 +332,7 @@ async function fieldTest(dirName) {
   /**
    * @type {String|DirData}
    */
-  const penv = isDirClean()
+  const penv = isDirClean(path.resolve(dirName))
   /**
    * If an env file is found and has "appblox specific key" set
    * (Which is a TODO)
@@ -514,5 +519,44 @@ async function createRepo(ownerId, ownerType, orgName) {
     console.log(chalk.green('Successfully Cloned!'))
   } catch (err) {
     console.log(chalk.red(`<<${err.message}>>`))
+  }
+}
+
+
+function isInGitRepository() {
+  try {
+    execSync("git rev-parse --is-inside-work-tree", { stdio: "ignore" })
+    return true
+  } catch (e) {
+    return false
+  }
+}
+ 
+function getRepoURL() {
+  const question = [
+    {
+      type: "customList",
+      name: "selectRepo",
+      message: "select a repo",
+      choices: [], //give empty list, loads initial set
+      source: new newls(userRepos.Q, userRepos.TrURL).sourceAll,
+      pageSize: 22,
+    },
+  ]
+  return inquirer.prompt(question).then((ans) => ans.selectRepo)
+}
+ 
+function tryGitInit() {
+  try {
+    execSync("git --version", { stdio: "ignore" })
+    if (isInGitRepository()) {
+      return false
+    }
+ 
+    execSync("git init", { stdio: "ignore" })
+    return true
+  } catch (e) {
+    console.warn("Git repo not initialized", e)
+    return false
   }
 }
