@@ -12,7 +12,7 @@ const fs = require('fs')
 const dotEnv = require('dotenv')
 const { Command } = require('commander')
 // eslint-disable-next-line no-unused-vars
-const { Observable, Subscriber, noop } = require('rxjs')
+const { Observable, Subscriber} = require('rxjs')
 // UTILS
 const Art = require('../utils/art')
 const pbcopy = require('../utils/clipcopy')
@@ -21,7 +21,8 @@ const OTPConfirmation = require('../utils/OTPConfirmation')
 const { NewLS } = require('../utils/listandselectrepos')
 const { userRepos, userOrgs, orgTeams } = require('../utils/Queries')
 const parseResponse = require('../utils/parseResponse')
-
+const {ensureDirSync,wipeAllFilesIn,isDirClean,createFileSync}=require('../utils/fileAndFolderHelpers')
+const {WipeAllConfirmation,getOrgId,getRepoURL,getTemplate}=require('../utils/questionPrompts')
 const packageJson = require('../package.json')
 const {
   cloneTemplateRepository,
@@ -123,47 +124,6 @@ async function checkAndSetAuth() {
   // process.exit(0)
 }
 
-/**
- * Creates dir if not present
- * @param {String} dir Path of directory
- * @returns
- */
-function ensureDirSync(dir) {
-  let stats
-  try {
-    stats = fs.statSync(dir)
-  } catch {
-    noop()
-  }
-  if (stats && stats.isDirectory()) return
-
-  fs.mkdirSync(dir)
-}
-
-function createFileSync(file) {
-  let stats
-  try {
-    stats = fs.statSync(file)
-  } catch {
-    noop()
-  }
-  if (stats && stats.isFile()) return
-
-  const dir = path.dirname(file)
-  try {
-    if (!fs.statSync(dir).isDirectory()) {
-      // parent is not a directory
-      // This is just to cause an internal ENOTDIR error to be thrown
-      fs.readdirSync(dir)
-    }
-  } catch (err) {
-    // If the stat call above failed because the directory doesn't exist, create it
-    if (err && err.code === 'ENOENT') fs.mkdirSync(dir)
-    else throw err
-  }
-
-  fs.writeFileSync(file, '')
-}
 
 function createprojectstructure(name) {
   const root = path.resolve(name)
@@ -266,62 +226,10 @@ function init() {
 
 init()
 
-/**
- *
- * @returns {String|Number} Path string if env is found, else object with number of directories and files
- */
-// eslint-disable-next-line consistent-return
-function isDirClean(dir) {
-  // const dir = process.cwd()
-  try {
-    const files = fs.readdirSync(dir)
-    if (files.includes('.env')) {
-      return dir
-    }
-    return files.reduce(
-      (acc, file) => {
-        if (fs.statSync(path.resolve(file)).isDirectory())
-          return { ...acc, dirs: acc.dirs + 1 }
-        return { ...acc, files: acc.files + 1 }
-      },
-      { dirs: 0, files: 0 }
-    )
-  } catch (e) {
-    if(e.code === 'ENOENT') return { dirs: 0, files: 0}
-  }
-  // console.log(dir);
-  // console.log(process.cwd());
-  // if(dir===path.parse(process.cwd()).root) return
-  // if(dir===path.parse(process.cwd()).root) return
-  // try {
-  //   const arrayOfFiles = fs.readdirSync(dir)
-  //   console.log(arrayOfFiles)
-  //   isDirClean(path.join(dir,"../"))
-  // } catch(e) {
-  //   console.log(e)
-  // }
-}
 
-function WipeAllConfirmation() {
-  return inquirer.prompt({
-    type: 'confirm',
-    message: 'There are files,Do you want to wipe all',
-    name: 'wipeAll',
-  })
-}
 
-function wipeAllFilesIn(dir) {
-  console.log('wiping in ', dir)
-  const files = fs.readdirSync(dir)
-  try {
-    for (let i = 0; i < files.length; i += 1) {
-      console.log('Removing ', path.join(dir, files[i]))
-      fs.rmSync(path.join(dir, files[i]), { recursive: true, force: true })
-    }
-  } catch (e) {
-    console.log('error deleting files')
-  }
-}
+
+
 async function fieldTest(dirName) {
   /**
    * @typedef DirData
@@ -376,57 +284,6 @@ async function fieldTest(dirName) {
   return false
 }
 
-function getTemplateV2() {
-  const questions = [
-    {
-      type: 'confirm',
-      name: 'createFromTemplate',
-      message: 'Create repo from a template',
-    },
-    {
-      type: 'customList',
-      name: 'selectTemplate',
-      message: 'select a template repo',
-      choices: [], // give empty list, custom list loads from api
-      source: new NewLS(userRepos.Q, userRepos.Tr_t).sourceAll,
-      pageSize: 22,
-      loop: false,
-      when: (ans) => ans.createFromTemplate,
-    },
-  ]
-  return inquirer
-    .prompt(questions)
-    .then((ans) => ans.selectTemplate || null)
-    .catch((err) => console.log(err, 'lll'))
-}
-/**
- * Prompts user for template repo selection
- * @returns {String|Null}
- */
-// eslint-disable-next-line no-unused-vars
-function getOrgId() {
-  const question = [
-    {
-      type: 'customList',
-      name: 'selectOrg',
-      message: 'select a organization',
-      choices: [], // give empty list, loads initial set
-      source: new NewLS(userOrgs.Q, userOrgs.Tr).sourceB,
-      pageSize: 22,
-    },
-  ]
-  return inquirer.prompt(question).then((ans) => {
-    console.log(ans)
-    // TODO -- if there are no organization returned from call,
-    // nothing will be listed, and user entering return in that case
-    // might cause inquirer to run into error, which is not handled
-    // and if there are no organizations, ask user whether to create in
-    // user git itself.
-
-    // ans will have display name followed by Id seperated by "/"
-    return ans.selectOrg.split('/')
-  })
-}
 
 /**
  *
@@ -438,7 +295,7 @@ async function createRepo(ownerId, ownerType, orgName) {
   /**
    * @type { Null|String} The user selected template repo
    */
-  const template = await getTemplateV2()
+  const template = await getTemplate()
   const questions = [
     {
       type: 'input',
@@ -532,19 +389,6 @@ function isInGitRepository() {
   }
 }
  
-function getRepoURL() {
-  const question = [
-    {
-      type: "customList",
-      name: "selectRepo",
-      message: "select a repo",
-      choices: [], //give empty list, loads initial set
-      source: new newls(userRepos.Q, userRepos.TrURL).sourceAll,
-      pageSize: 22,
-    },
-  ]
-  return inquirer.prompt(question).then((ans) => ans.selectRepo)
-}
  
 function tryGitInit() {
   try {
