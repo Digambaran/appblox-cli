@@ -1,5 +1,7 @@
 
 const {userOrgs,userRepos} = require('./Queries')
+const {NewLS} = require('./listandselectrepos')
+const inquirer = require('inquirer')
 
 function getTemplate() {
     const questions = [

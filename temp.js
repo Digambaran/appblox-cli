@@ -271,3 +271,18 @@ const getAllFilesRecursively = function (dirPath, arrayOfFiles) {
   })
   return arrayOfFiles
 }
+
+function convert() {
+  const gitsubmodules = fs.readFileSync(path.resolve(".thefile"), {
+    encoding: "utf-8",
+  })
+  // console.log(gitsubmodules);
+  const regExp =
+    /\[submodule\s*"(?<name>(.*?))"]\s*path\s=\s(?<path>[a-zA-Z_]+)\s*url\s=\s(?<url>[a-zA-Z_:/.-]+)/g
+  const matches = gitsubmodules.matchAll(regExp)
+  // console.log(matches);
+  for (const iterator of matches) {
+    // console.log(iterator);
+    console.log(iterator.groups)
+  }
+}
